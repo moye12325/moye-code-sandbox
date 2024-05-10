@@ -8,18 +8,14 @@ import com.moye.moyecodesandbox.model.ExecuteCodeResponse;
 import com.moye.moyecodesandbox.model.ExecuteMessage;
 import com.moye.moyecodesandbox.model.JudgeInfo;
 import com.moye.moyecodesandbox.utils.ProcessUtils;
-import org.springframework.util.StopWatch;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class JavaNativeCodeSandbox implements CodeSandbox {
 
@@ -86,14 +82,14 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
             throw new RuntimeException(ex);
         }
 
-        //        3 执行代码，得到输出结果
+        // 3 执行代码，得到输出结果
         ArrayList<ExecuteMessage> executeMessageList = new ArrayList<>();
         for (String inputArgs : inputList) {
 
             String runCmd = String.format("java -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentPath, inputArgs);
             try {
-                Process compileProcess = Runtime.getRuntime().exec(compileCmd);
-                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "运行");
+                Process runProcess = Runtime.getRuntime().exec(runCmd);
+                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
                 System.out.println("executeMessage = " + executeMessage);
                 executeMessageList.add(executeMessage);
             } catch (IOException ex) {
@@ -103,8 +99,6 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
                 getErrorResponse(ex);
                 throw new RuntimeException(ex);
             }
-
-//TODO 无法获取输出结果
 
         }
 //        4 收集整理输出结果
@@ -139,11 +133,11 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
         judgeInfo.setTime(maxTime);
         executeCodeResponse.setJudgeInfo(judgeInfo);
 
-//        5 文件清理，释放空间
-        if (userCodeFile.getParentFile().exists()) {
-            boolean del = FileUtil.del(userCodeParentPath);
-            System.out.println("删除" + (del ? "成功" : "失败"));
-        }
+//        // 5 文件清理，释放空间
+//        if (userCodeFile.getParentFile().exists()) {
+//            boolean del = FileUtil.del(userCodeParentPath);
+//            System.out.println("删除" + (del ? "成功" : "失败"));
+//        }
 
         return executeCodeResponse;
     }
