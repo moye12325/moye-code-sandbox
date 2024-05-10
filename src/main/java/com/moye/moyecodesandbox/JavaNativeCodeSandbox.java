@@ -8,6 +8,7 @@ import com.moye.moyecodesandbox.model.ExecuteCodeResponse;
 import com.moye.moyecodesandbox.model.ExecuteMessage;
 import com.moye.moyecodesandbox.model.JudgeInfo;
 import com.moye.moyecodesandbox.utils.ProcessUtils;
+import org.omg.CORBA.TIMEOUT;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,13 +22,17 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
 
     private static final String GLOBAL_CODE_DIR_NAME = "tmpCode";
     private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
+    private static final Object SECURITY_MANAGER_PATH = "src/main/resources/security";
+    private static final Object SECURITY_MANAGER_CLASS_NAME = "MySecurityManager";
+    private static final long TIME_OUT = 5000L;
 
 
     public static void main(String[] args) {
         JavaNativeCodeSandbox javaNativeCodeSandbox = new JavaNativeCodeSandbox();
         ExecuteCodeRequest executeCodeRequest = new ExecuteCodeRequest();
         executeCodeRequest.setInputList(Arrays.asList("1 2", "3 4", "5 6", "7 8", "9 10"));
-        String code = ResourceUtil.readStr("test/simple/Main.java", StandardCharsets.UTF_8);
+//        String code = ResourceUtil.readStr("test/simple/Main.java", StandardCharsets.UTF_8);
+        String code = ResourceUtil.readStr("testCode/unsafeCode/ReadFileError.java", StandardCharsets.UTF_8);
         executeCodeRequest.setCode(code);
         executeCodeRequest.setLanguage("java");
         ExecuteCodeResponse executeCodeResponse = javaNativeCodeSandbox.executeCode(executeCodeRequest);
@@ -50,6 +55,9 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
 //        4 收集整理输出结果
 //        5 文件清理，释放空间
 //        6 错误处理，提升程序健壮性
+
+        // 提高安全性
+//        System.setSecurityManager(new SecurityManager());
 
         String code = executeCodeRequest.getCode();
         List<String> inputList = executeCodeRequest.getInputList();
@@ -83,12 +91,25 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
         }
 
         // 3 执行代码，得到输出结果
-        ArrayList<ExecuteMessage> executeMessageList = new ArrayList<>();
+        List<ExecuteMessage> executeMessageList = new ArrayList<>();
         for (String inputArgs : inputList) {
 
-            String runCmd = String.format("java -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentPath, inputArgs);
+            // 设置运行内存限制
+            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main %s", userCodeParentPath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME, inputArgs);
             try {
                 Process runProcess = Runtime.getRuntime().exec(runCmd);
+
+                // 设置运行超时限制
+                new Thread(()->{
+                    try {
+                        Thread.sleep(TIME_OUT);
+                        System.out.println("超时了，中断程序");
+                        runProcess.destroy();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).start();
+
                 ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
                 System.out.println("executeMessage = " + executeMessage);
                 executeMessageList.add(executeMessage);
@@ -104,9 +125,7 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
 //        4 收集整理输出结果
         ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
         List<String> outputList = new ArrayList<>();
-
         long maxTime = 0;
-
         for (ExecuteMessage executeMessage : executeMessageList) {
             String errorMessage = executeMessage.getErrorMessage();
             if (StrUtil.isNotBlank(errorMessage)) {
