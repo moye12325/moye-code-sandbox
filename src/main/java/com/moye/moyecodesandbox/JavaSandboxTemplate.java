@@ -36,7 +36,7 @@ public abstract class JavaSandboxTemplate implements CodeSandbox {
     private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
     private static final Object SECURITY_MANAGER_PATH = "src/main/resources/security";
     private static final Object SECURITY_MANAGER_CLASS_NAME = "MySecurityManager";
-    private static final long TIME_OUT = 5000L;
+    private static final long TIME_OUT = 50000000000L;
     private static final boolean FIRST_INIT = true;
 
 
@@ -99,7 +99,7 @@ public abstract class JavaSandboxTemplate implements CodeSandbox {
         for (String inputArgs : inputList) {
 
             // 设置运行内存限制
-            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main %s", userCodeParentPath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME, inputArgs);
+            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentPath, inputArgs);
             try {
                 Process runProcess = Runtime.getRuntime().exec(runCmd);
                 // 设置运行超时限制
