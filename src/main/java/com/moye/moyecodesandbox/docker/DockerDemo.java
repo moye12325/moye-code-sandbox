@@ -23,7 +23,7 @@ public class DockerDemo {
         DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
 
         // 拉取镜像名称
-        String image = "nginx";
+        String image = "nginx:latest";
         // 创建容器
         PullImageCmd pullImageCmd = dockerClient.pullImageCmd(image);
         PullImageResultCallback pullImageResultCallback = new PullImageResultCallback() {
