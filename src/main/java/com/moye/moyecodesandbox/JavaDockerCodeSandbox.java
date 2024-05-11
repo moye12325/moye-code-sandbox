@@ -13,6 +13,7 @@ import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.moye.moyecodesandbox.model.ExecuteCodeRequest;
 import com.moye.moyecodesandbox.model.ExecuteCodeResponse;
 import com.moye.moyecodesandbox.model.ExecuteMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
 import java.io.Closeable;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@Component
 public class JavaDockerCodeSandbox extends JavaSandboxTemplate {
 
     private static final boolean FIRST_INIT = true;
